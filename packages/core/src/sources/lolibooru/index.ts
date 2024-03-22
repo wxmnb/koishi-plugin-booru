@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { Context, Dict, Schema, trimSlash } from 'koishi'
 import { ImageSource } from '../../source'
 import { Lolibooru } from './types'
+
 /**
  * Lolibooru requires a password hash for authentication.
  *
@@ -57,7 +58,11 @@ class LolibooruImageSource extends ImageSource<LolibooruImageSource.Config> {
         // Since lolibooru returns URL that contains white spaces that are not transformed
         // into `%20`, which breaks in go-cqhttp who cannot resolve to a valid URL.
         // Fixes: https://github.com/koishijs/koishi-plugin-booru/issues/95
-        url: encodeURI(post.file_url),
+        urls: {
+          original: encodeURI(post.file_url),
+          medium: encodeURI(post.sample_url),
+          thumbnail: encodeURI(post.preview_url),
+        },
         pageUrl: post.source,
         author: post.author.replace(/ /g, ', ').replace(/_/g, ' '),
         tags: post.tags.split(' ').map((t) => t.replace(/_/g, ' ')),
@@ -82,7 +87,7 @@ namespace LolibooruImageSource {
           login: Schema.string().required().description('用户名'),
           password: Schema.string().required().role('secret').description('密码'),
         }),
-      ).description('Konachan 的登录凭据。'),
+      ).description('Lolibooru 的登录凭据。'),
     }).description('搜索设置'),
   ])
 }
