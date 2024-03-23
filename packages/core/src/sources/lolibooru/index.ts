@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto'
-import { Context, Dict, Schema, trimSlash } from 'koishi'
+
+import { Dict, Schema, trimSlash } from 'koishi'
+
 import { ImageSource } from '../../source'
+
 import { Lolibooru } from './types'
 
 /**
@@ -19,10 +22,6 @@ function hashPassword(password: string) {
 class LolibooruImageSource extends ImageSource<LolibooruImageSource.Config> {
   languages = ['en']
   source = 'lolibooru'
-
-  constructor(ctx: Context, config: LolibooruImageSource.Config) {
-    super(ctx, config)
-  }
 
   get keyPair() {
     if (!this.config.keyPairs.length) return

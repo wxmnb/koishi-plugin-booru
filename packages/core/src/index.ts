@@ -1,7 +1,8 @@
 import { Context, Logger, Quester, Schema, Service, remove } from 'koishi'
 import LanguageDetect from 'languagedetect'
-import { ImageSource } from './source'
+
 import * as Command from './command'
+import { ImageSource } from './source'
 import {} from '@koishijs/assets'
 
 export * from './source'
@@ -19,6 +20,7 @@ class ImageService extends Service {
     required: [],
     optional: ['assets'],
   }
+
   private sources: ImageSource[] = []
   private languageDetect = new LanguageDetect()
 
@@ -66,7 +68,10 @@ class ImageService extends Service {
       const images = await source.get({ count: query.count, tags, raw: query.query }).catch((err) => {
         if (Quester.Error.is(err)) {
           logger.warn(
-            `source ${source.config.label} request failed ${err.response?.status ? `with code ${err.response?.status} ${JSON.stringify(err.response?.data)}` : ''}`,
+            [
+              `source ${source.config.label} request failed`,
+              err.response?.status ? `with code ${err.response?.status} ${JSON.stringify(err.response?.data)}` : '',
+            ].join(' '),
           )
         } else {
           logger.error(`source ${source.config.label} unknown error: ${err.message}`)
@@ -75,10 +80,11 @@ class ImageService extends Service {
         logger.debug(err)
         return []
       })
-      if (images?.length)
+      if (images?.length) {
         return Object.assign(images, {
           source: source.source,
         })
+      }
     }
 
     return undefined
@@ -136,6 +142,7 @@ export interface Config {
   confidence: number
   maxCount: number
   output: OutputType
+  outputMethod: 'one-by-one' | 'merge-multiple' | 'forward-all' | 'forward-multiple'
   preferSize: ImageSource.PreferSize
   nsfw: boolean
   asset: boolean
@@ -173,6 +180,16 @@ export const Config = Schema.intersect([
     ])
       .description('输出方式。')
       .default(1),
+    outputMethod: Schema.union([
+      Schema.const('one-by-one').description('逐条发送每张图片'),
+      Schema.const('merge-multiple').description('合并多条发送 (部分平台可能不支持)'),
+      Schema.const('forward-all').description('合并为子话题发送所有图片 (部分平台需求较高权限)'),
+      Schema.const('forward-multiple').description('仅当多于一张图片使用合并为子话题发送 (部分平台需求较高权限)'),
+    ])
+      .experimental()
+      .role('radio')
+      .default('merge-multiple')
+      .description('发送方式。'),
     preferSize: Schema.union([
       Schema.const('original').description('原始尺寸'),
       Schema.const('large').description('较大尺寸 (通常为约 1200px)'),
@@ -200,5 +217,6 @@ export function apply(ctx: Context, config: Config) {
   ctx.plugin(ImageService, config)
   ctx.plugin(Command, config)
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   ctx.i18n.define('zh', require('./locales/zh-CN'))
 }

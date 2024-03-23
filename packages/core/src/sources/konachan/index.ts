@@ -1,6 +1,9 @@
 import { createHash } from 'node:crypto'
-import { Context, Dict, Schema, trimSlash } from 'koishi'
+
+import { Dict, Schema, trimSlash } from 'koishi'
+
 import { ImageSource } from '../../source'
+
 import { Konachan } from './types'
 
 /**
@@ -20,10 +23,6 @@ class KonachanImageSource extends ImageSource<KonachanImageSource.Config> {
   languages = ['en']
   source = 'konachan'
 
-  constructor(ctx: Context, config: KonachanImageSource.Config) {
-    super(ctx, config)
-  }
-
   get keyPair() {
     if (!this.config.keyPairs.length) return
     const key = this.config.keyPairs[Math.floor(Math.random() * this.config.keyPairs.length)]
@@ -39,7 +38,7 @@ class KonachanImageSource extends ImageSource<KonachanImageSource.Config> {
       tags: query.tags.join('+') + '+order:random',
       limit: `${query.count}`,
     }
-    let url = trimSlash(this.config.endpoint) + '/post.json'
+    const url = trimSlash(this.config.endpoint) + '/post.json'
 
     const keyPair = this.keyPair
     if (keyPair) {
